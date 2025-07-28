@@ -3,31 +3,31 @@
     <!-- Cartes de statistiques principales -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-8 mb-10 w-full">
       <div class="bg-blue-100 rounded-2xl p-10 flex flex-col items-center shadow-lg">
-        <span class="text-5xl font-extrabold text-blue-800">{{ stats.avgSteps.toLocaleString() }}</span>
+        <span class="text-5xl font-extrabold text-blue-800">{{ avgSteps }}</span>
         <span class="text-base text-blue-700 mt-2">Pas moyens/jour</span>
         <div class="mt-2 text-sm">
-          <span :class="stats.avgSteps >= HEALTH_GOALS.dailySteps ? 'text-green-600' : 'text-orange-600'">
-            {{ stats.avgSteps >= HEALTH_GOALS.dailySteps ? '✓ Objectif atteint' : `${HEALTH_GOALS.dailySteps - stats.avgSteps} pas manquants` }}
+          <span :class="isNumber(avgSteps) && avgSteps >= HEALTH_GOALS.dailySteps ? 'text-green-600' : 'text-orange-600'">
+            {{ isNumber(avgSteps) && avgSteps >= HEALTH_GOALS.dailySteps ? '✓ Objectif atteint' : isNumber(avgSteps) ? `${formatValue(HEALTH_GOALS.dailySteps - avgSteps)} pas manquants` : '' }}
           </span>
         </div>
       </div>
 
       <div class="bg-blue-100 rounded-2xl p-10 flex flex-col items-center shadow-lg">
-        <span class="text-5xl font-extrabold text-blue-800">{{ stats.avgSleepHours }}h</span>
+        <span class="text-5xl font-extrabold text-blue-800">{{ avgSleep }}</span>
         <span class="text-base text-blue-700 mt-2">Sommeil moyen</span>
         <div class="mt-2 text-sm">
-          <span :class="stats.avgSleepHours >= HEALTH_GOALS.dailySleep ? 'text-green-600' : 'text-orange-600'">
-            {{ stats.avgSleepHours >= HEALTH_GOALS.dailySleep ? '✓ Objectif atteint' : `${HEALTH_GOALS.dailySleep - stats.avgSleepHours}h manquantes` }}
+          <span :class="isNumber(avgSleep) && avgSleep >= HEALTH_GOALS.dailySleep ? 'text-green-600' : 'text-orange-600'">
+            {{ isNumber(avgSleep) && avgSleep >= HEALTH_GOALS.dailySleep ? '✓ Objectif atteint' : isNumber(avgSleep) ? `${formatValue(HEALTH_GOALS.dailySleep - avgSleep)}h manquantes` : '' }}
           </span>
         </div>
       </div>
 
       <div class="bg-blue-100 rounded-2xl p-10 flex flex-col items-center shadow-lg">
-        <span class="text-5xl font-extrabold text-blue-800">{{ stats.avgWaterIntake }}L</span>
+        <span class="text-5xl font-extrabold text-blue-800">{{ avgWater }}</span>
         <span class="text-base text-blue-700 mt-2">Eau moyenne/jour</span>
         <div class="mt-2 text-sm">
-          <span :class="stats.avgWaterIntake >= HEALTH_GOALS.dailyWater ? 'text-green-600' : 'text-orange-600'">
-            {{ stats.avgWaterIntake >= HEALTH_GOALS.dailyWater ? '✓ Objectif atteint' : `${HEALTH_GOALS.dailyWater - stats.avgWaterIntake}L manquants` }}
+          <span :class="isNumber(avgWater) && avgWater >= HEALTH_GOALS.dailyWater ? 'text-green-600' : 'text-orange-600'">
+            {{ isNumber(avgWater) && avgWater >= HEALTH_GOALS.dailyWater ? '✓ Objectif atteint' : isNumber(avgWater) ? `${formatValue(HEALTH_GOALS.dailyWater - avgWater)}L manquants` : '' }}
           </span>
         </div>
       </div>
@@ -57,7 +57,7 @@
           <div class="text-4xl mb-2">👟</div>
           <h4 class="font-semibold text-gray-800 mb-2">Pas quotidiens</h4>
           <div class="text-3xl font-bold" :class="getStepColor()">
-            {{ todayEntry?.steps?.toLocaleString() || 0 }}
+            {{ getDisplay(todayEntry?.steps) }}
           </div>
           <div class="text-sm text-gray-600 mt-1">
             Objectif: {{ HEALTH_GOALS.dailySteps.toLocaleString() }}
@@ -78,7 +78,7 @@
           <div class="text-4xl mb-2">😴</div>
           <h4 class="font-semibold text-gray-800 mb-2">Heures de sommeil</h4>
           <div class="text-3xl font-bold" :class="getSleepColor()">
-            {{ todayEntry?.sleepHours || 0 }}h
+            {{ getDisplay(todayEntry?.sleepHours) }}h
           </div>
           <div class="text-sm text-gray-600 mt-1">
             Objectif: {{ HEALTH_GOALS.dailySleep }}h
@@ -99,7 +99,7 @@
           <div class="text-4xl mb-2">💧</div>
           <h4 class="font-semibold text-gray-800 mb-2">Hydratation</h4>
           <div class="text-3xl font-bold" :class="getWaterColor()">
-            {{ todayEntry?.waterIntake || 0 }}L
+            {{ getDisplay(todayEntry?.waterIntake) }}L
           </div>
           <div class="text-sm text-gray-600 mt-1">
             Objectif: {{ HEALTH_GOALS.dailyWater }}L
@@ -136,52 +136,57 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <h4 class="font-semibold text-gray-800 mb-3 text-center">Pas quotidiens</h4>
-          <div class="flex items-end justify-between h-32 gap-1">
-            <div
-              v-for="(steps, index) in stats.weeklyProgress.steps"
-              :key="index"
-              class="flex-1 bg-blue-200 rounded-t transition-all duration-300 hover:bg-blue-300"
-              :style="{ height: `${Math.max((steps / HEALTH_GOALS.dailySteps) * 100, 5)}%` }"
-              :title="`${getDayName(index)}: ${steps.toLocaleString()} pas`"
-            ></div>
+          <div class="flex flex-col">
+            <div class="flex items-end justify-between h-32 gap-1 pb-2" style="max-height: 7rem;">
+              <div
+                v-for="(steps, index) in stats.weeklyProgress.steps"
+                :key="index"
+                class="flex-1 bg-blue-200 rounded-t transition-all duration-300 hover:bg-blue-300"
+                :style="{ height: `${Math.max((steps / HEALTH_GOALS.dailySteps) * 100, 5)}%` }"
+                :title="`${getDayName(index)}: ${steps.toLocaleString()} pas`"
+              ></div>
+            </div>
           </div>
-          <div class="flex justify-between text-xs text-gray-500 mt-2">
+          <!-- Ligne des sous-titres séparée, sous le graphique -->
+          <div class="flex justify-between text-xs text-gray-500 mt-4 min-h-[1.5rem] w-full">
             <span v-for="(_, index) in stats.weeklyProgress.steps" :key="index">
               {{ getDayName(index) }}
             </span>
           </div>
         </div>
-
         <div>
           <h4 class="font-semibold text-gray-800 mb-3 text-center">Sommeil (heures)</h4>
-          <div class="flex items-end justify-between h-32 gap-1">
-            <div
-              v-for="(sleep, index) in stats.weeklyProgress.sleep"
-              :key="index"
-              class="flex-1 bg-blue-200 rounded-t transition-all duration-300 hover:bg-blue-300"
-              :style="{ height: `${Math.max((sleep / HEALTH_GOALS.dailySleep) * 100, 5)}%` }"
-              :title="`${getDayName(index)}: ${sleep}h`"
-            ></div>
+          <div class="flex flex-col">
+            <div class="flex items-end justify-between h-32 gap-1 pb-2" style="max-height: 7rem;">
+              <div
+                v-for="(sleep, index) in stats.weeklyProgress.sleep"
+                :key="index"
+                class="flex-1 bg-blue-200 rounded-t transition-all duration-300 hover:bg-blue-300"
+                :style="{ height: `${Math.max((sleep / HEALTH_GOALS.dailySleep) * 100, 5)}%` }"
+                :title="`${getDayName(index)}: ${sleep}h`"
+              ></div>
+            </div>
           </div>
-          <div class="flex justify-between text-xs text-gray-500 mt-2">
+          <div class="flex justify-between text-xs text-gray-500 mt-4 min-h-[1.5rem] w-full">
             <span v-for="(_, index) in stats.weeklyProgress.sleep" :key="index">
               {{ getDayName(index) }}
             </span>
           </div>
         </div>
-
         <div>
           <h4 class="font-semibold text-gray-800 mb-3 text-center">Hydratation (L)</h4>
-          <div class="flex items-end justify-between h-32 gap-1">
-            <div
-              v-for="(water, index) in stats.weeklyProgress.water"
-              :key="index"
-              class="flex-1 bg-blue-200 rounded-t transition-all duration-300 hover:bg-blue-300"
-              :style="{ height: `${Math.max((water / HEALTH_GOALS.dailyWater) * 100, 5)}%` }"
-              :title="`${getDayName(index)}: ${water}L`"
-            ></div>
+          <div class="flex flex-col">
+            <div class="flex items-end justify-between h-32 gap-1 pb-2" style="max-height: 7rem;">
+              <div
+                v-for="(water, index) in stats.weeklyProgress.water"
+                :key="index"
+                class="flex-1 bg-blue-200 rounded-t transition-all duration-300 hover:bg-blue-300"
+                :style="{ height: `${Math.max((water / HEALTH_GOALS.dailyWater) * 100, 5)}%` }"
+                :title="`${getDayName(index)}: ${water}L`"
+              ></div>
+            </div>
           </div>
-          <div class="flex justify-between text-xs text-gray-500 mt-2">
+          <div class="flex justify-between text-xs text-gray-500 mt-4 min-h-[1.5rem] w-full">
             <span v-for="(_, index) in stats.weeklyProgress.water" :key="index">
               {{ getDayName(index) }}
             </span>
@@ -194,8 +199,41 @@
 
 <script setup lang="ts">
 import { useHealthTracker } from '../../../composables/useHealthTracker';
+import { computed } from 'vue';
 
-const { stats, todayEntry, healthStatus, HEALTH_GOALS } = useHealthTracker();
+const { stats, todayEntry, healthStatus, HEALTH_GOALS, entries } = useHealthTracker();
+
+// Moyennes intelligentes : on ne compte que les jours où la donnée est > 0
+const avgSteps = computed(() => {
+  const valid = entries.value.filter(e => e.steps > 0);
+  if (valid.length === 0) return '-';
+  return Math.round(valid.reduce((sum, e) => sum + e.steps, 0) / valid.length);
+});
+const avgSleep = computed(() => {
+  const valid = entries.value.filter(e => e.sleepHours > 0);
+  if (valid.length === 0) return '-';
+  return Math.round((valid.reduce((sum, e) => sum + e.sleepHours, 0) / valid.length) * 10) / 10;
+});
+const avgWater = computed(() => {
+  const valid = entries.value.filter(e => e.waterIntake > 0);
+  if (valid.length === 0) return '-';
+  return Math.round((valid.reduce((sum, e) => sum + e.waterIntake, 0) / valid.length) * 10) / 10;
+});
+
+function getDisplay(val: number | undefined) {
+  return val && val > 0 ? val : '-';
+}
+
+function isNumber(val: string | number): val is number {
+  return typeof val === 'number';
+}
+
+function formatValue(val: string | number, decimals = 1) {
+  if (typeof val === 'number') {
+    return val % 1 === 0 ? val : val.toFixed(decimals);
+  }
+  return val;
+}
 
 function getStepColor() {
   const steps = todayEntry.value?.steps || 0;

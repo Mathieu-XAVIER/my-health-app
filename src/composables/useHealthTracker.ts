@@ -27,8 +27,8 @@ const STORAGE_KEY = 'health-entries';
 
 // Objectifs recommandés
 const HEALTH_GOALS = {
-  dailySteps: 10000,
-  dailySleep: 8,
+  dailySteps: 6000,
+  dailySleep: 7,
   dailyWater: 2.5, // litres
 };
 
@@ -56,11 +56,11 @@ function calculateSleepHours(sleepStart: string, sleepEnd: string): number {
 export function useHealthTracker() {
   const entries = ref<HealthEntry[]>(loadEntries());
 
-  function addEntry(entry: Omit<HealthEntry, 'id' | 'date'>) {
+  function addEntry(entry: Omit<HealthEntry, 'id'> & { date?: string }) {
     const newEntry: HealthEntry = {
       ...entry,
       id: Date.now().toString(),
-      date: new Date().toISOString().slice(0, 10),
+      date: entry.date || new Date().toISOString().slice(0, 10),
     };
     entries.value.push(newEntry);
     saveEntries(entries.value);
@@ -76,6 +76,11 @@ export function useHealthTracker() {
 
   function removeEntry(id: string) {
     entries.value = entries.value.filter(entry => entry.id !== id);
+    saveEntries(entries.value);
+  }
+
+  function clearAllEntries() {
+    entries.value = [];
     saveEntries(entries.value);
   }
 
@@ -164,6 +169,7 @@ export function useHealthTracker() {
     updateEntry,
     removeEntry,
     calculateSleepHours,
-    HEALTH_GOALS
+    HEALTH_GOALS,
+    clearAllEntries
   };
 }

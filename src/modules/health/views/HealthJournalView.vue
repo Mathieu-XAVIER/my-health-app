@@ -3,7 +3,12 @@
     <h1 class="text-4xl font-extrabold text-blue-800 mb-6 mt-6 text-center">Suivi de ma santé quotidienne</h1>
 
     <!-- Statistiques de santé -->
-    <HealthStats />
+    <div class="mb-8">
+      <HealthStats />
+    </div>
+
+    <!-- Import des données Santé iPhone -->
+    <HealthImport />
 
     <!-- Formulaire d'ajout de données -->
     <HealthEntryForm />
@@ -17,4 +22,5 @@
 import HealthStats from "../components/HealthStats.vue";
 import HealthEntryForm from "../components/HealthEntryForm.vue";
 import HealthHistory from "../components/HealthHistory.vue";
+import HealthImport from "../components/HealthImport.vue";
 </script>

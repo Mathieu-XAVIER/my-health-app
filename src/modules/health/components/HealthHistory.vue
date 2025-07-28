@@ -65,89 +65,123 @@
         </thead>
         <tbody>
           <tr
-            v-for="entry in filteredEntries"
+            v-for="entry in paginatedEntries"
             :key="entry.id"
             class="border-b border-gray-100 hover:bg-blue-50 transition-colors"
           >
-            <td class="py-3 px-4">
-              <div class="font-medium text-gray-800">{{ formatDate(entry.date) }}</div>
-              <div class="text-sm text-gray-500">{{ getDayName(entry.date) }}</div>
-            </td>
+            <template v-if="showEditId === entry.id">
+              <!-- Formulaire d'édition inline -->
+              <td class="py-3 px-4">
+                <div class="font-medium text-gray-800">{{ formatDate(entry.date) }}</div>
+                <div class="text-sm text-gray-500">{{ getDayName(entry.date) }}</div>
+              </td>
+              <td class="py-3 px-4">
+                <input type="number" v-model.number="editForm.steps" class="w-20 border rounded px-2 py-1" min="0" />
+              </td>
+              <td class="py-3 px-4">
+                <input type="number" v-model.number="editForm.sleepHours" class="w-16 border rounded px-2 py-1" min="0" step="0.1" />
+              </td>
+              <td class="py-3 px-4">
+                <input type="number" v-model.number="editForm.waterIntake" class="w-16 border rounded px-2 py-1" min="0" step="0.1" />
+              </td>
+              <td class="py-3 px-4">
+                <select v-model="editForm.mood" class="border rounded px-2 py-1">
+                  <option value="excellent">😊 Excellent</option>
+                  <option value="bon">🙂 Bon</option>
+                  <option value="moyen">😐 Moyen</option>
+                  <option value="mauvais">😔 Mauvais</option>
+                </select>
+              </td>
+              <td class="py-3 px-4">
+                <input type="text" v-model="editForm.notes" class="w-full border rounded px-2 py-1" placeholder="Notes" />
+              </td>
+              <td class="py-3 px-4">
+                <button @click="saveEdit(entry.id)" class="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-1 mr-2">Enregistrer</button>
+                <button @click="cancelEdit" class="bg-gray-200 rounded px-3 py-1">Annuler</button>
+              </td>
+            </template>
+            <template v-else>
+              <!-- Ligne normale -->
+              <td class="py-3 px-4">
+                <div class="font-medium text-gray-800">{{ formatDate(entry.date) }}</div>
+                <div class="text-sm text-gray-500">{{ getDayName(entry.date) }}</div>
+              </td>
 
-            <td class="py-3 px-4">
-              <div class="font-semibold" :class="getStepColor(entry.steps)">
-                {{ entry.steps.toLocaleString() }}
-              </div>
-              <div class="text-xs text-gray-500">
-                {{ getStepProgress(entry.steps) }}
-              </div>
-            </td>
+              <td class="py-3 px-4">
+                <div class="font-semibold" :class="getStepColor(entry.steps)">
+                  {{ entry.steps.toLocaleString() }}
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ getStepProgress(entry.steps) }}
+                </div>
+              </td>
 
-            <td class="py-3 px-4">
-              <div class="font-semibold" :class="getSleepColor(entry.sleepHours)">
-                {{ entry.sleepHours }}h
-              </div>
-              <div class="text-xs text-gray-500">
-                {{ getSleepProgress(entry.sleepHours) }}
-              </div>
-            </td>
+              <td class="py-3 px-4">
+                <div class="font-semibold" :class="getSleepColor(entry.sleepHours)">
+                  {{ getDisplay(entry.sleepHours) }}h
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ getSleepProgress(entry.sleepHours) }}
+                </div>
+              </td>
 
-            <td class="py-3 px-4">
-              <div class="font-semibold" :class="getWaterColor(entry.waterIntake)">
-                {{ entry.waterIntake }}L
-              </div>
-              <div class="text-xs text-gray-500">
-                {{ getWaterProgress(entry.waterIntake) }}
-              </div>
-            </td>
+              <td class="py-3 px-4">
+                <div class="font-semibold" :class="getWaterColor(entry.waterIntake)">
+                  {{ getDisplay(entry.waterIntake) }}L
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ getWaterProgress(entry.waterIntake) }}
+                </div>
+              </td>
 
-            <td class="py-3 px-4">
-              <div class="flex items-center gap-2">
-                <span class="text-lg">{{ getMoodEmoji(entry.mood) }}</span>
-                <span class="text-sm font-medium text-gray-700">{{ getMoodText(entry.mood) }}</span>
-              </div>
-            </td>
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">{{ getMoodEmoji(entry.mood) }}</span>
+                  <span class="text-sm font-medium text-gray-700">{{ getMoodText(entry.mood) }}</span>
+                </div>
+              </td>
 
-            <td class="py-3 px-4">
-              <div class="flex items-center gap-2">
-                <div
-                  class="w-3 h-3 rounded-full"
-                  :class="getOverallStatusColor(entry)"
-                ></div>
-                <span class="text-sm font-medium" :class="getOverallStatusTextColor(entry)">
-                  {{ getOverallStatusText(entry) }}
-                </span>
-              </div>
-            </td>
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-3 h-3 rounded-full"
+                    :class="getOverallStatusColor(entry)"
+                  ></div>
+                  <span class="text-sm font-medium" :class="getOverallStatusTextColor(entry)">
+                    {{ getOverallStatusText(entry) }}
+                  </span>
+                </div>
+              </td>
 
-            <td class="py-3 px-4">
-              <div class="flex gap-2">
-                <button
-                  @click="editEntry(entry)"
-                  class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition"
-                  title="Modifier"
-                >
-                  ✏️
-                </button>
-                <button
-                  @click="deleteEntry(entry.id)"
-                  class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
-                  title="Supprimer"
-                >
-                  🗑️
-                </button>
-              </div>
-            </td>
+              <td class="py-3 px-4">
+                <div class="flex gap-2">
+                  <button
+                    @click="editEntry(entry)"
+                    class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition"
+                    title="Modifier"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    @click="deleteEntry(entry.id)"
+                    class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
+                    title="Supprimer"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </template>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div v-if="filteredEntries.length > 0" class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
-      <div class="text-sm text-gray-600">
-        {{ filteredEntries.length }} entrée{{ filteredEntries.length > 1 ? 's' : '' }}
-      </div>
+    <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 mt-6">
+      <button @click="prevPage" :disabled="page === 1" class="px-3 py-1 rounded bg-blue-100 text-blue-700 disabled:opacity-50">Précédent</button>
+      <span>Page {{ page }} / {{ totalPages }}</span>
+      <button @click="nextPage" :disabled="page === totalPages" class="px-3 py-1 rounded bg-blue-100 text-blue-700 disabled:opacity-50">Suivant</button>
     </div>
   </div>
 </template>
@@ -156,12 +190,18 @@
 import { ref, computed } from 'vue';
 import { useHealthTracker } from '../../../composables/useHealthTracker';
 
-const { entries, removeEntry, HEALTH_GOALS } = useHealthTracker();
+const { entries, removeEntry, updateEntry, HEALTH_GOALS } = useHealthTracker();
+
+const showEditId = ref<string|null>(null);
+const editForm = ref<any>({});
 
 const showTodayOnly = ref(false);
 const filterStart = ref('');
 const filterEnd = ref('');
 const filterMood = ref('');
+
+const page = ref(1);
+const pageSize = 10;
 
 const filteredEntries = computed(() => {
   let filtered = [...entries.value].sort((a, b) => b.date.localeCompare(a.date));
@@ -185,6 +225,13 @@ const filteredEntries = computed(() => {
 
   return filtered;
 });
+
+const paginatedEntries = computed(() => {
+  const start = (page.value - 1) * pageSize;
+  return filteredEntries.value.slice(start, start + pageSize);
+});
+
+const totalPages = computed(() => Math.ceil(filteredEntries.value.length / pageSize));
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -293,13 +340,41 @@ function getOverallStatusText(entry: any) {
 }
 
 function editEntry(entry: any) {
-  // TODO: Implémenter l'édition
-  console.log('Éditer:', entry);
+  showEditId.value = entry.id;
+  editForm.value = { ...entry };
+}
+
+function cancelEdit() {
+  showEditId.value = null;
+  editForm.value = {};
+}
+
+function saveEdit(id: string) {
+  updateEntry(id, {
+    steps: Number(editForm.value.steps) || 0,
+    sleepHours: Number(editForm.value.sleepHours) || 0,
+    waterIntake: Number(editForm.value.waterIntake) || 0,
+    mood: editForm.value.mood,
+    notes: editForm.value.notes
+  });
+  showEditId.value = null;
+  editForm.value = {};
 }
 
 function deleteEntry(id: string) {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')) {
     removeEntry(id);
   }
+}
+
+function getDisplay(val: number) {
+  return val > 0 ? val : '-';
+}
+
+function nextPage() {
+  if (page.value < totalPages.value) page.value++;
+}
+function prevPage() {
+  if (page.value > 1) page.value--;
 }
 </script>
