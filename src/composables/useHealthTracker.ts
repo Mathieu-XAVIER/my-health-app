@@ -2,7 +2,7 @@ import { ref, computed } from 'vue';
 
 interface HealthEntry {
   id: string;
-  date: string;
+  date?: string;
   steps: number;
   sleepHours: number;
   waterIntake: number; // en litres
@@ -103,10 +103,12 @@ export function useHealthTracker() {
     // Calculer la série actuelle
     let currentStreak = 0;
     const today = new Date().toISOString().slice(0, 10);
-    const sortedEntries = [...entries.value].sort((a, b) => b.date.localeCompare(a.date));
+    const sortedEntries = [...entries.value]
+      .filter(e => e.date)
+      .sort((a, b) => (b.date as string).localeCompare(a.date as string));
 
     for (const entry of sortedEntries) {
-      if (entry.date <= today) {
+      if (entry.date && entry.date <= today) {
         currentStreak++;
       } else {
         break;

@@ -3,6 +3,21 @@
     <h3 class="text-xl font-bold text-blue-700 mb-6">Ajouter mes données de santé</h3>
 
     <form @submit.prevent="saveEntry" class="space-y-6">
+      <!-- Sélection de la date -->
+      <div class="mb-4">
+        <label class="block text-gray-700 font-medium mb-2">
+          <span class="flex items-center gap-2">
+            <span class="text-xl">📅</span>
+            Date de l'entrée
+          </span>
+        </label>
+        <input
+          type="date"
+          v-model="dateValue"
+          :max="today"
+          class="w-full border-2 border-blue-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition"
+        />
+      </div>
       <!-- Pas quotidiens -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -167,6 +182,9 @@ import { useHealthTracker } from '../../../composables/useHealthTracker';
 
 const { addEntry, todayEntry, HEALTH_GOALS } = useHealthTracker();
 
+const today = new Date().toISOString().slice(0, 10);
+const dateValue = ref(today);
+
 const formData = ref({
   steps: 0,
   sleepHours: 0,
@@ -226,7 +244,8 @@ function saveEntry() {
     sleepHours: formData.value.sleepHours,
     waterIntake: formData.value.waterIntake,
     mood: formData.value.mood,
-    notes: formData.value.notes
+    notes: formData.value.notes,
+    date: dateValue.value
   });
 
   showSuccess.value = true;
@@ -250,5 +269,6 @@ function resetForm() {
   };
   sleepStart.value = '';
   sleepEnd.value = '';
+  dateValue.value = today;
 }
 </script>
